@@ -1,0 +1,56 @@
+# Your skills. Edit here or in the dashboard at /skills.
+#   core: true      -> weighs more, and can be required
+#   min_matches     -> hide jobs matching fewer skills than this
+#   require_core    -> hide jobs that mention none of your core skills
+
+min_matches: 0
+require_core: false
+skills:
+- name: flutter
+  core: true
+- name: dart
+  core: true
+- name: firebase
+  core: true
+- name: android
+  core: true
+- name: ios
+  core: false
+- name: kotlin
+  core: false
+- name: swift
+  core: false
+- name: mobile
+  core: false
+- name: javascript
+  core: false
+- name: typescript
+  core: false
+- name: react
+  core: false
+- name: node
+  core: false
+- name: python
+  core: false
+- name: git
+  core: false
+- name: rest api
+  core: false
+- name: sql
+  core: false
+- name: agile
+  core: false
+- name: scrum
+  core: false
+- name: jira
+  core: false
+- name: bloc
+  core: true
+- name: provider
+  core: true
+- name: getx
+  core: true
+- name: next.js
+  core: false
+- name: software
+  core: false

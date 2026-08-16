@@ -213,6 +213,18 @@ def dedupe(jobs: list[RawJob]) -> list[RawJob]:
 # Filtering + scoring
 # --------------------------------------------------------------------------
 
+def as_utc(dt: datetime | None) -> datetime | None:
+    """Treat naive datetimes as UTC.
+
+    Timestamps are stored naive in SQLite but arrive tz-aware from the feeds,
+    so anything that rebuilds a job from the database would otherwise blow up
+    comparing the two.
+    """
+    if dt is None:
+        return None
+    return dt if dt.tzinfo else dt.replace(tzinfo=timezone.utc)
+
+
 def passes_hard_filters(job: RawJob, cfg) -> tuple[bool, str]:
     title_l = (job.title or "").lower()
 
@@ -221,8 +233,9 @@ def passes_hard_filters(job: RawJob, cfg) -> tuple[bool, str]:
             return False, f"excluded title keyword '{bad}'"
 
     max_age = cfg.get("search.max_age_days", 30)
-    if job.posted_at:
-        age = datetime.now(timezone.utc) - job.posted_at
+    posted = as_utc(job.posted_at)
+    if posted:
+        age = datetime.now(timezone.utc) - posted
         if age > timedelta(days=max_age):
             return False, f"older than {max_age} days"
 
@@ -283,9 +296,15 @@ def _title_match(job_title: str, want: str) -> float:
     return 0.5 * overlap + 0.5 * ratio
 
 
-def score(job: RawJob, cfg) -> tuple[int, str]:
-    """0-100 keyword/recency score. LLM re-scoring layers on top in M4."""
+def score(job: RawJob, cfg, profile=None) -> tuple[int, str, list[str]]:
+    """0-100 score. Returns (score, reason, matched_skills).
+
+    LLM re-scoring layers on top in M4.
+    """
+    from app.skills import load_skills, match_skills, skill_score
+
     reasons: list[str] = []
+    profile = profile if profile is not None else load_skills()
 
     best = 0.0
     best_t = ""
@@ -297,16 +316,16 @@ def score(job: RawJob, cfg) -> tuple[int, str]:
     if best >= 0.7:
         reasons.append(f"title~'{best_t}' ({best:.2f})")
 
-    body = f"{job.title} {job.description or ''}".lower()
-    kws = cfg.get("search.keywords", [])
-    hits = [k for k in kws if k.lower() in body]
-    kw_score = min(len(hits) * 6, 25)       # up to 25 pts
+    body = f"{job.title} {job.description or ''}"
+    hits = match_skills(body, profile)
+    kw_score = skill_score(hits, profile)   # up to 30 pts
     if hits:
-        reasons.append(f"skills: {', '.join(hits[:6])}")
+        reasons.append(f"your skills: {', '.join(hits[:8])}")
 
     recency = 0
-    if job.posted_at:
-        days = (datetime.now(timezone.utc) - job.posted_at).days
+    posted = as_utc(job.posted_at)
+    if posted:
+        days = (datetime.now(timezone.utc) - posted).days
         recency = 10 if days <= 3 else 7 if days <= 7 else 4 if days <= 14 else 0
         if days <= 7:
             reasons.append(f"posted {days}d ago")
@@ -323,7 +342,7 @@ def score(job: RawJob, cfg) -> tuple[int, str]:
         reasons.append(exp_note)
 
     total = max(0, min(title_score + kw_score + recency + bonus + exp, 100))
-    return total, "; ".join(reasons) or "no strong signals"
+    return total, "; ".join(reasons) or "no strong signals", hits
 
 
 # Matches "5+ years", "3-5 years", "minimum 4 years of experience".

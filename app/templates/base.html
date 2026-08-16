@@ -30,7 +30,11 @@
 <header class="border-b border-[#1f2937] bg-[#0d1320]">
   <div class="max-w-[1400px] mx-auto px-6 py-4 flex items-center gap-4">
     <a href="/" class="text-lg font-bold tracking-tight">Job<span class="text-blue-400">Applier</span></a>
-    <span class="text-xs text-gray-500">local · your data stays on this machine</span>
+    <nav class="flex items-center gap-3 text-sm">
+      <a href="/" class="text-gray-300 hover:text-white">Jobs</a>
+      <a href="/skills" class="text-gray-300 hover:text-white">Skills</a>
+    </nav>
+    <span class="text-xs text-gray-500 hidden lg:inline">local · your data stays on this machine</span>
     <div class="ml-auto flex items-center gap-2">
       <span id="runmsg" class="text-xs text-gray-400"></span>
       <button id="runbtn" onclick="startRun()" class="btn btn-primary px-4 py-2 text-sm">Find jobs</button>
@@ -47,13 +51,24 @@ async function startRun(){
   await fetch('/run',{method:'POST',body:fd});
   poll();
 }
+// Only reload when THIS page watched a run go running -> finished. The server
+// keeps its last message forever, so reloading just because the message reads
+// "Done" makes every page load reload itself, endlessly.
+let sawRunning=false;
 async function poll(){
-  const r=await fetch('/api/state'); const s=await r.json();
+  let s;
+  try { s=await (await fetch('/api/state')).json(); }
+  catch(e){ setTimeout(poll,5000); return; }    // server restarting -- back off
   document.getElementById('runmsg').textContent=s.message||'';
   const b=document.getElementById('runbtn');
-  if(s.running){ b.disabled=true; b.textContent='Running...'; setTimeout(poll,2000); }
-  else { b.disabled=false; b.textContent='Find jobs';
-         if(s.message&&s.message.startsWith('Done')) setTimeout(()=>location.reload(),900); }
+  if(s.running){
+    sawRunning=true;
+    b.disabled=true; b.textContent='Running...';
+    setTimeout(poll,2000);
+  } else {
+    b.disabled=false; b.textContent='Find jobs';
+    if(sawRunning){ sawRunning=false; setTimeout(()=>location.reload(),900); }
+  }
 }
 async function setStatus(id,val){
   const fd=new FormData(); fd.append('status',val);

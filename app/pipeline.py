@@ -56,7 +56,10 @@ def upsert_company(sess, name: str) -> Company:
 
 def persist(jobs: list[RawJob], cfg) -> tuple[int, int]:
     """Insert new jobs, refresh last_seen on ones we've seen before."""
+    from app.skills import load_skills, passes_skill_filter
+
     new = updated = 0
+    profile = load_skills()
     with session() as sess:
         for rj in jobs:
             h = N.dedupe_hash(rj)
@@ -68,7 +71,13 @@ def persist(jobs: list[RawJob], cfg) -> tuple[int, int]:
                 continue
 
             eligible, reason = N.classify_eligibility(rj)
-            sc, sreason = N.score(rj, cfg)
+            sc, sreason, matched = N.score(rj, cfg, profile)
+
+            # Skill gate is opt-in (min_matches / require_core in skills.yaml).
+            ok_skills, why = passes_skill_filter(matched, profile)
+            if not ok_skills:
+                continue
+
             comp = upsert_company(sess, rj.company_name)
             # LinkedIn job cards carry the real company LinkedIn URL. Capture
             # it here -- it beats anything we could reconstruct later.
@@ -98,6 +107,7 @@ def persist(jobs: list[RawJob], cfg) -> tuple[int, int]:
                 posted_at=posted,
                 match_score=sc,
                 score_reason=sreason,
+                matched_skills=", ".join(matched) or None,
                 status="scored",
             ))
             new += 1
@@ -154,6 +164,47 @@ async def run_discovery(cfg=None) -> dict:
 
     return {"raw": len(raw), "kept": len(deduped), "new": new,
             "updated": updated, "dropped": dropped, "sources": stats}
+
+
+def rescore_all(cfg=None) -> dict:
+    """Recompute scores and skill matches for every stored job.
+
+    Called after you edit your skills, so the existing database re-ranks
+    instantly instead of forcing a fresh multi-minute scrape.
+    """
+    from app.skills import load_skills, passes_skill_filter
+
+    cfg = cfg or load()
+    profile = load_skills()
+    changed = hidden = 0
+
+    with session() as sess:
+        jobs = list(sess.exec(select(Job)).all())
+        for j in jobs:
+            rj = RawJob(
+                title=j.title, company_name=j.company_name,
+                apply_url=j.apply_url, source=j.source,
+                location=j.location, description=j.description,
+                salary=j.salary, posted_at=j.posted_at,
+                remote_type=j.remote_type, location_restriction=j.location,
+            )
+            sc, reason, matched = N.score(rj, cfg, profile)
+            ok, why = passes_skill_filter(matched, profile)
+            if not ok:
+                # Park it rather than delete -- relaxing the filter brings it
+                # straight back without another scrape.
+                sc, reason = 0, f"filtered: {why}"
+                hidden += 1
+            if (j.match_score != sc or
+                    (j.matched_skills or "") != ", ".join(matched)):
+                changed += 1
+            j.match_score = sc
+            j.score_reason = reason
+            j.matched_skills = ", ".join(matched) or None
+            sess.add(j)
+        sess.commit()
+
+    return {"total": len(jobs), "changed": changed, "hidden": hidden}
 
 
 def top_jobs(limit: int = 50, min_score: int | None = None):

@@ -76,10 +76,18 @@
           {% elif j.match_score>=55 %}text-blue-400{% else %}text-gray-400{% endif %}">
           {{ j.match_score }}</span>
       </td>
-      <td class="px-3 py-3 max-w-[300px]">
+      <td class="px-3 py-3 max-w-[320px]">
         <a href="/jobs/{{ j.id }}" class="link font-medium">{{ j.title }}</a>
         <div class="text-[11px] text-gray-500 mt-0.5">{{ j.source }}
           {% if j.posted_at %}· {{ j.posted_at.strftime('%d %b') }}{% endif %}</div>
+        {% if j.matched_skills %}
+        <div class="flex flex-wrap gap-1 mt-1.5">
+          {% for s in j.matched_skills.split(', ')[:6] %}
+          <span class="text-[10px] px-1.5 py-0.5 rounded bg-[#0d2033] text-sky-300
+                       border border-[#1c3a52]">{{ s }}</span>
+          {% endfor %}
+        </div>
+        {% endif %}
       </td>
       <td class="px-3 py-3">{{ j.company_name }}</td>
       <td class="px-3 py-3 text-gray-400 text-xs max-w-[180px]">{{ j.location or '—' }}</td>

@@ -40,6 +40,27 @@ Runs every morning at 8:00. Because `-StartWhenAvailable` is set, a sleeping
 laptop still gets its sweep once it wakes rather than skipping the day.
 Summary lines land in `data/output/sweep.log`.
 
+## Skills — `/skills` in the dashboard
+
+Add your skills, mark the important ones **core**, and jobs are scored and
+filtered against them. Stored in `data/skills.yaml` (kept separate from
+`config.yaml` so the UI can rewrite it without destroying that file's comments).
+
+- **Core skills** are worth roughly double when scoring.
+- **Minimum skills a job must match** — `0` is off; `2–3` cuts jobs that only
+  brush past your stack.
+- **Must mention a core skill** — the strongest filter.
+- Each skill shows a **count** of how many jobs mention it, so you can see which
+  of your skills this market actually asks for.
+- **Rescore** re-ranks the existing database in seconds. No re-scraping.
+
+> ⚠️ **Skill filters are harsher than they look right now.** Only ~62% of stored
+> jobs carry a description — the LinkedIn guest endpoint and Mustakbil return
+> titles only, so for those jobs skill matching sees the title alone and finds
+> almost nothing. With `min_matches=2`, 259 of 287 jobs were hidden, mostly for
+> that reason rather than genuine mismatch. Leave the filter at `0` until
+> per-job description fetching is added, and use it as a sort signal instead.
+
 ## Tuning — `config.yaml`
 
 The single file that steers everything. The two settings that matter most:

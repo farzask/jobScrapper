@@ -50,6 +50,7 @@ class Job(SQLModel, table=True):
     posted_at: Optional[datetime] = None
     match_score: int = Field(default=0, index=True)
     score_reason: Optional[str] = None
+    matched_skills: Optional[str] = None        # comma-separated
     status: str = Field(default="discovered", index=True)
     first_seen: datetime = Field(default_factory=utcnow)
     last_seen: datetime = Field(default_factory=utcnow)
@@ -110,8 +111,29 @@ def engine():
     return _engine
 
 
+def _migrate() -> None:
+    """Add columns introduced after a database already exists.
+
+    create_all() only creates missing tables, never missing columns, so an
+    existing jobapplier.db would otherwise break on a new field.
+    """
+    from sqlalchemy import text
+    wanted = {"jobs": {"matched_skills": "TEXT"}}
+    with engine().connect() as conn:
+        for table, cols in wanted.items():
+            existing = {row[1] for row in
+                        conn.execute(text(f"PRAGMA table_info({table})"))}
+            if not existing:
+                continue                       # table not created yet
+            for col, coltype in cols.items():
+                if col not in existing:
+                    conn.execute(text(f"ALTER TABLE {table} ADD COLUMN {col} {coltype}"))
+                    conn.commit()
+
+
 def init_db() -> None:
     SQLModel.metadata.create_all(engine())
+    _migrate()
 
 
 def session() -> Session:
