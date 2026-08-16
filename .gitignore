@@ -1,0 +1,7 @@
+.venv/
+__pycache__/
+*.pyc
+data/jobapplier.db
+data/output/
+.browser_profile/
+.env

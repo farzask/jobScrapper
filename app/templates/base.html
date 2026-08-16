@@ -1,0 +1,67 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>{% block title %}JobApplier{% endblock %}</title>
+<!-- Tailwind is vendored locally, not pulled from a CDN: no supply-chain
+     exposure and the dashboard still works with no internet connection. -->
+<script src="/static/tailwind.js"></script>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#0b0f16; color:#e6edf3; font-family: ui-sans-serif, system-ui, "Segoe UI", sans-serif; }
+  .card { background:#121926; border:1px solid #1f2937; border-radius:14px; }
+  .pill { font-size:11px; padding:2px 8px; border-radius:999px; font-weight:600; letter-spacing:.02em; }
+  .elig-yes     { background:#052e1a; color:#4ade80; border:1px solid #14532d; }
+  .elig-unknown { background:#2a2410; color:#facc15; border:1px solid #4d3f10; }
+  .elig-no      { background:#2c1214; color:#f87171; border:1px solid #4c1d24; }
+  table tbody tr:hover { background:#161f2e; }
+  a.link { color:#7dd3fc; }
+  a.link:hover { text-decoration:underline; }
+  select, input { background:#0d1420; border:1px solid #243044; color:#e6edf3; border-radius:8px; }
+  .btn { border-radius:9px; font-weight:600; transition:.15s; }
+  .btn-primary { background:#2563eb; color:#fff; }
+  .btn-primary:hover { background:#1d4ed8; }
+  .btn-ghost { background:#111a29; border:1px solid #243044; color:#c7d2e0; }
+  .btn-ghost:hover { background:#182233; }
+</style>
+</head>
+<body class="min-h-screen">
+<header class="border-b border-[#1f2937] bg-[#0d1320]">
+  <div class="max-w-[1400px] mx-auto px-6 py-4 flex items-center gap-4">
+    <a href="/" class="text-lg font-bold tracking-tight">Job<span class="text-blue-400">Applier</span></a>
+    <span class="text-xs text-gray-500">local · your data stays on this machine</span>
+    <div class="ml-auto flex items-center gap-2">
+      <span id="runmsg" class="text-xs text-gray-400"></span>
+      <button id="runbtn" onclick="startRun()" class="btn btn-primary px-4 py-2 text-sm">Find jobs</button>
+      <a href="/export.csv" class="btn btn-ghost px-4 py-2 text-sm">Download CSV</a>
+    </div>
+  </div>
+</header>
+<main class="max-w-[1400px] mx-auto px-6 py-6">{% block content %}{% endblock %}</main>
+<script>
+async function startRun(){
+  const b=document.getElementById('runbtn');
+  b.disabled=true; b.textContent='Running...';
+  const fd=new FormData(); fd.append('enrich','1');
+  await fetch('/run',{method:'POST',body:fd});
+  poll();
+}
+async function poll(){
+  const r=await fetch('/api/state'); const s=await r.json();
+  document.getElementById('runmsg').textContent=s.message||'';
+  const b=document.getElementById('runbtn');
+  if(s.running){ b.disabled=true; b.textContent='Running...'; setTimeout(poll,2000); }
+  else { b.disabled=false; b.textContent='Find jobs';
+         if(s.message&&s.message.startsWith('Done')) setTimeout(()=>location.reload(),900); }
+}
+async function setStatus(id,val){
+  const fd=new FormData(); fd.append('status',val);
+  await fetch('/jobs/'+id+'/status',{method:'POST',body:fd});
+  const el=document.getElementById('row-'+id);
+  if(el){ el.style.opacity=.55; setTimeout(()=>el.style.opacity=1,400); }
+}
+poll();
+</script>
+</body>
+</html>

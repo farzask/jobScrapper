@@ -1,0 +1,119 @@
+{% extends "base.html" %}
+{% block content %}
+
+<div class="grid grid-cols-2 md:grid-cols-5 gap-3 mb-6">
+  {% set cards = [
+    ('Matches', stats.scored, 'score ≥ ' ~ stats.min_score, 'text-blue-400'),
+    ('Eligible from PK', stats.eligible, 'confirmed open to you', 'text-green-400'),
+    ('Pakistan roles', stats.pakistan, 'onsite or local remote', 'text-purple-400'),
+    ('Applied', stats.applied, 'submitted so far', 'text-amber-400'),
+    ('Total scanned', stats.total, 'in database', 'text-gray-400')
+  ] %}
+  {% for label, val, sub, color in cards %}
+  <div class="card p-4">
+    <div class="text-[11px] uppercase tracking-wide text-gray-500">{{ label }}</div>
+    <div class="text-3xl font-bold {{ color }} mt-1">{{ val }}</div>
+    <div class="text-[11px] text-gray-500 mt-1">{{ sub }}</div>
+  </div>
+  {% endfor %}
+</div>
+
+{% if stats.scored < stats.target %}
+<div class="card p-3 mb-5 border-amber-800/60 bg-amber-950/20 text-amber-200 text-sm">
+  Below your target of {{ stats.target }} matches. Try lowering
+  <code class="text-amber-300">search.min_score</code> in config.yaml, or add more
+  companies to <code class="text-amber-300">seeds/companies.yaml</code>.
+</div>
+{% endif %}
+
+<form method="get" class="card p-3 mb-4 flex flex-wrap gap-2 items-center">
+  <input name="q" value="{{ filters.q }}" placeholder="Search title or company"
+         class="px-3 py-2 text-sm w-64">
+  <select name="eligible" class="px-3 py-2 text-sm">
+    <option value="">Any eligibility</option>
+    {% for v in ['yes','unknown','no'] %}
+    <option value="{{ v }}" {% if filters.eligible==v %}selected{% endif %}>{{ v }}</option>
+    {% endfor %}
+  </select>
+  <select name="market" class="px-3 py-2 text-sm">
+    <option value="">Any market</option>
+    {% for v in ['remote_global','pakistan_onsite','pakistan_remote'] %}
+    <option value="{{ v }}" {% if filters.market==v %}selected{% endif %}>{{ v }}</option>
+    {% endfor %}
+  </select>
+  <select name="status" class="px-3 py-2 text-sm">
+    <option value="">Any status</option>
+    {% for v in statuses %}
+    <option value="{{ v }}" {% if filters.status==v %}selected{% endif %}>{{ v }}</option>
+    {% endfor %}
+  </select>
+  <button class="btn btn-ghost px-4 py-2 text-sm">Filter</button>
+  <a href="/" class="text-xs text-gray-500 hover:text-gray-300 px-2">reset</a>
+  <span class="ml-auto text-xs text-gray-500">{{ rows|length }} shown</span>
+</form>
+
+<div class="card overflow-hidden">
+<div class="overflow-x-auto">
+<table class="w-full text-sm">
+  <thead class="bg-[#0e1626] text-gray-400 text-[11px] uppercase tracking-wide">
+    <tr>
+      <th class="text-left px-3 py-3">Score</th>
+      <th class="text-left px-3 py-3">Role</th>
+      <th class="text-left px-3 py-3">Company</th>
+      <th class="text-left px-3 py-3">Location</th>
+      <th class="text-left px-3 py-3">Eligible</th>
+      <th class="text-left px-3 py-3">Contact</th>
+      <th class="text-left px-3 py-3">Links</th>
+      <th class="text-left px-3 py-3">Status</th>
+    </tr>
+  </thead>
+  <tbody class="divide-y divide-[#1b2536]">
+  {% for r in rows %}
+    {% set j = r.j %}
+    <tr id="row-{{ j.id }}" class="align-top">
+      <td class="px-3 py-3">
+        <span class="font-bold {% if j.match_score>=70 %}text-green-400
+          {% elif j.match_score>=55 %}text-blue-400{% else %}text-gray-400{% endif %}">
+          {{ j.match_score }}</span>
+      </td>
+      <td class="px-3 py-3 max-w-[300px]">
+        <a href="/jobs/{{ j.id }}" class="link font-medium">{{ j.title }}</a>
+        <div class="text-[11px] text-gray-500 mt-0.5">{{ j.source }}
+          {% if j.posted_at %}· {{ j.posted_at.strftime('%d %b') }}{% endif %}</div>
+      </td>
+      <td class="px-3 py-3">{{ j.company_name }}</td>
+      <td class="px-3 py-3 text-gray-400 text-xs max-w-[180px]">{{ j.location or '—' }}</td>
+      <td class="px-3 py-3">
+        <span class="pill elig-{{ j.eligible }}">{{ j.eligible }}</span>
+      </td>
+      <td class="px-3 py-3 text-xs">
+        {% if r.contact and r.contact.email %}
+          <a class="link" href="mailto:{{ r.contact.email }}">{{ r.contact.email }}</a>
+        {% else %}<span class="text-gray-600">—</span>{% endif %}
+      </td>
+      <td class="px-3 py-3 text-xs whitespace-nowrap">
+        <a class="link" href="{{ j.apply_url }}" target="_blank" rel="noopener">Apply</a>
+        {% if r.company and r.company.linkedin_url %}
+        · <a class="link" href="{{ r.company.linkedin_url }}" target="_blank" rel="noopener">LI</a>
+        {% endif %}
+        {% if r.contact and r.contact.linkedin_url %}
+        · <a class="link" href="{{ r.contact.linkedin_url }}" target="_blank" rel="noopener">Find HM</a>
+        {% endif %}
+      </td>
+      <td class="px-3 py-3">
+        <select onchange="setStatus({{ j.id }}, this.value)" class="px-2 py-1 text-xs">
+          {% for s in statuses %}
+          <option value="{{ s }}" {% if j.status==s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="8" class="px-3 py-10 text-center text-gray-500">
+      No jobs yet — hit <strong>Find jobs</strong> to run a search.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+</div>
+</div>
+{% endblock %}

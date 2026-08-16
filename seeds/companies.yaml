@@ -1,0 +1,125 @@
+# Companies whose public ATS boards we sweep directly.
+#
+# The prober discovers which ATS each one uses and caches the result to the DB,
+# so the discovery cost is paid once per company, not once per run.
+#
+# Add any company you'd like to work for -- if they use one of the six
+# supported ATS platforms, their entire open board becomes searchable.
+
+# --- Genuinely global-remote employers (hire outside the US/EU) -------------
+global_remote:
+  - GitLab
+  - Automattic
+  - Canonical
+  - Toptal
+  - Turing
+  - Andela
+  - Deel
+  - Remote
+  - Oyster
+  - Doist
+  - Zapier
+  - Hotjar
+  - Aha
+  - Chess.com
+  - Grafana Labs
+  - Elastic
+  - PostHog
+  - Supabase
+  - Sourcegraph
+  - Mozilla
+  - DuckDuckGo
+  - Netlify
+  - Vercel
+  - HashiCorp
+  - Percona
+  - Strapi
+  - Ghost
+  - Prisma
+  - Cal.com
+  - Mattermost
+  - Nextcloud
+  - Odoo
+  - Scaleway
+  - Wikimedia Foundation
+  - Internet Archive
+  - Khan Academy
+  - Coursera
+  - Udacity
+  - Lemon.io
+  - Crossover
+  - X-Team
+  - Arc
+  - Gun.io
+  - CloudDevs
+
+# --- Large tech with broad international hiring ----------------------------
+international:
+  - Stripe
+  - Shopify
+  - Datadog
+  - Twilio
+  - Cloudflare
+  - Coinbase
+  - Consensys
+  - Binance
+  - Kraken
+  - Figma
+  - Linear
+  - Ramp
+  - Brex
+  - Plaid
+  - Airbnb
+  - Spotify
+  - Booking.com
+  - Delivery Hero
+  - Careem
+  - Klarna
+  - Revolut
+  - Wise
+  - N26
+  - Bolt
+  - Glovo
+
+# --- Pakistan-based / Pakistan-hiring employers ----------------------------
+pakistan:
+  - Systems Limited
+  - NETSOL Technologies
+  - Arbisoft
+  - 10Pearls
+  - Devsinc
+  - VentureDive
+  - Contour Software
+  - Confiz
+  - Folio3
+  - i2c
+  - Techlogix
+  - Motive
+  - Educative
+  - Bazaar Technologies
+  - Tazah
+  - PostEx
+  - Abhi
+  - Haball
+  - Zameen
+  - Daraz
+  - Telenor Pakistan
+  - Jazz
+  - Afiniti
+  - TRG
+  - Ebryx
+  - Emumba
+  - Genetech Solutions
+  - Tkxel
+  - Xgrid
+  - Cubix
+  - Retailo
+  - Dastgyr
+  - Bykea
+  - Sastaticket
+  - Securiti
+  - Salesflo
+  - Trukkr
+  - Mashkraft
+  - Programmers Force
+  - Rapidev

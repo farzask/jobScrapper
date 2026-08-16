@@ -1,0 +1,130 @@
+# ============================================================================
+#  JobApplier configuration
+#  Edit this file to steer what the tool looks for. Everything else is derived.
+# ============================================================================
+
+profile:
+  name: "Fasia Shahzad"
+  email: "fasiaashahzad@gmail.com"
+  phone: ""
+  location: "Pakistan"
+  linkedin: ""
+  github: ""
+  portfolio: ""
+
+search:
+  # >>> EDIT THESE <<<  Roles you actually want. Matching is fuzzy, so
+  # "data analyst" also catches "Analyst, Data" and "Senior Data Analyst".
+  titles:
+    # Mobile / Flutter track
+    - "flutter developer"
+    - "flutter engineer"
+    - "mobile app developer"
+    - "mobile application developer"
+    - "android developer"
+    - "ios developer"
+    - "react native developer"
+    # Software engineering track (entry level)
+    - "associate software engineer"
+    - "junior software engineer"
+    - "software engineer"
+    - "software developer"
+    - "frontend developer"
+    - "frontend engineer"
+    - "full stack developer"
+    - "web developer"
+    - "graduate software engineer"
+    - "trainee software engineer"
+    # Project coordination track
+    - "project coordinator"
+    - "associate project manager"
+    - "junior project manager"
+    - "project management officer"
+    - "scrum master"
+
+  keywords:
+    - flutter
+    - dart
+    - firebase
+    - android
+    - ios
+    - kotlin
+    - swift
+    - react native
+    - mobile
+    - javascript
+    - typescript
+    - react
+    - node
+    - python
+    - rest api
+    - git
+    - sql
+    - agile
+    - scrum
+    - jira
+
+  # Any of these in the TITLE disqualifies the job outright.
+  # Tuned for 0-2 years: senior/lead/staff titles are out of range.
+  exclude_titles:
+    - "principal"
+    - "staff "
+    - "director"
+    - "vp "
+    - "head of"
+    - "chief"
+    - "architect"
+    - "senior"
+    - "sr."
+    - "lead "
+    - "manager,"
+    - "unpaid"
+    - "volunteer"
+
+  # Two job markets, per your brief.
+  onsite_countries: ["Pakistan"]
+  onsite_cities: ["Karachi", "Lahore", "Islamabad", "Rawalpindi", "Peshawar", "Faisalabad"]
+
+  max_age_days: 30      # ignore postings older than this
+  min_score: 40         # 0-100; below this a job never reaches the review queue
+  target_jobs: 30       # minimum you want per run
+
+  # Experience targeting. Roles demanding more than max_years_required are
+  # penalized heavily, and entry-level signals are rewarded.
+  experience_level: "entry"   # entry | mid | senior | lead
+  max_years_required: 3
+
+# Eligibility: you are based in Pakistan. Many "remote" jobs are secretly
+# US-only. Jobs are classified yes / no / unknown -- "no" is dropped so you
+# never waste an application, "unknown" is kept and flagged.
+eligibility:
+  based_in: "Pakistan"
+  drop_ineligible: true
+  keep_unknown: true
+
+sources:
+  remoteok:   true
+  remotive:   true
+  arbeitnow:  true
+  himalayas:  true
+  jobicy:     true
+  ats:        true       # sweeps seeds/companies.yaml -- add companies there
+  mustakbil:  true
+  linkedin_guest: true   # public logged-out endpoint only, rate-limited
+  rozee:      false      # needs Playwright (Cloudflare); enable in M2b
+
+llm:
+  provider: "anthropic"          # anthropic | gemini | none
+  model: "claude-haiku-4-5-20251001"
+  # Reads ANTHROPIC_API_KEY from the environment. Leave unset to skip
+  # LLM scoring/tailoring -- the pipeline degrades to keyword scoring only.
+
+apply:
+  dry_run: true                  # NEVER submits while true. Flip only when ready.
+  headless: false                # you should be able to watch it work
+  profile_dir: ".browser_profile"
+
+paths:
+  db: "data/jobapplier.db"
+  master_resume: "data/master_resume.docx"
+  output_dir: "data/output"

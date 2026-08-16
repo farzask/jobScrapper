@@ -1,0 +1,89 @@
+{% extends "base.html" %}
+{% block title %}{{ j.title }} — JobApplier{% endblock %}
+{% block content %}
+
+<a href="/" class="text-xs text-gray-500 hover:text-gray-300">&larr; back to all jobs</a>
+
+<div class="grid md:grid-cols-3 gap-5 mt-3">
+  <div class="md:col-span-2 space-y-5">
+    <div class="card p-5">
+      <div class="flex items-start gap-3">
+        <div>
+          <h1 class="text-2xl font-bold">{{ j.title }}</h1>
+          <p class="text-gray-400 mt-1">{{ j.company_name }}
+            {% if j.location %}· {{ j.location }}{% endif %}</p>
+        </div>
+        <div class="ml-auto text-right">
+          <div class="text-3xl font-bold text-blue-400">{{ j.match_score }}</div>
+          <div class="text-[11px] text-gray-500">match score</div>
+        </div>
+      </div>
+      <div class="flex flex-wrap gap-2 mt-4">
+        <span class="pill elig-{{ j.eligible }}">eligible: {{ j.eligible }}</span>
+        <span class="pill bg-[#101a2b] border border-[#243044] text-gray-300">{{ j.market or 'unknown' }}</span>
+        <span class="pill bg-[#101a2b] border border-[#243044] text-gray-300">{{ j.remote_type or 'unknown' }}</span>
+        <span class="pill bg-[#101a2b] border border-[#243044] text-gray-300">{{ j.source }}</span>
+        {% if j.salary %}<span class="pill bg-[#052e1a] text-green-400 border border-[#14532d]">{{ j.salary }}</span>{% endif %}
+      </div>
+      <div class="mt-4 flex gap-2">
+        <a href="{{ j.apply_url }}" target="_blank" rel="noopener"
+           class="btn btn-primary px-4 py-2 text-sm">Open application</a>
+        <select onchange="setStatus({{ j.id }}, this.value)" class="px-3 py-2 text-sm">
+          {% for s in statuses %}
+          <option value="{{ s }}" {% if j.status==s %}selected{% endif %}>{{ s }}</option>
+          {% endfor %}
+        </select>
+      </div>
+    </div>
+
+    <div class="card p-5">
+      <h2 class="font-semibold mb-2 text-sm uppercase tracking-wide text-gray-400">Why it matched</h2>
+      <p class="text-sm text-gray-300">{{ j.score_reason }}</p>
+      <p class="text-xs text-gray-500 mt-2">Eligibility: {{ j.eligibility_reason }}</p>
+    </div>
+
+    <div class="card p-5">
+      <h2 class="font-semibold mb-3 text-sm uppercase tracking-wide text-gray-400">Description</h2>
+      <div class="text-sm text-gray-300 whitespace-pre-wrap leading-relaxed max-h-[28rem] overflow-y-auto">
+{{ j.description or 'No description captured for this posting.' }}</div>
+    </div>
+  </div>
+
+  <div class="space-y-5">
+    <div class="card p-5">
+      <h2 class="font-semibold mb-3 text-sm uppercase tracking-wide text-gray-400">Company</h2>
+      {% if company %}
+      <div class="text-sm space-y-2">
+        <div>{{ company.name }}</div>
+        {% if company.website %}
+        <div><a class="link" href="{{ company.website }}" target="_blank" rel="noopener">{{ company.domain }}</a></div>{% endif %}
+        {% if company.linkedin_url %}
+        <div><a class="link" href="{{ company.linkedin_url }}" target="_blank" rel="noopener">LinkedIn page</a></div>{% endif %}
+        {% if company.careers_url %}
+        <div><a class="link" href="{{ company.careers_url }}" target="_blank" rel="noopener">All open roles</a></div>{% endif %}
+        {% if company.ats_type %}
+        <div class="text-xs text-gray-500">ATS: {{ company.ats_type }}</div>{% endif %}
+      </div>
+      {% else %}<p class="text-sm text-gray-500">Not enriched yet.</p>{% endif %}
+    </div>
+
+    <div class="card p-5">
+      <h2 class="font-semibold mb-3 text-sm uppercase tracking-wide text-gray-400">Cold outreach</h2>
+      {% if contact %}
+      <div class="text-sm space-y-2">
+        {% if contact.name %}<div class="font-medium">{{ contact.name }}</div>{% endif %}
+        {% if contact.title %}<div class="text-gray-400 text-xs">{{ contact.title }}</div>{% endif %}
+        {% if contact.email %}
+        <div><a class="link" href="mailto:{{ contact.email }}">{{ contact.email }}</a>
+          <span class="pill bg-[#101a2b] border border-[#243044] text-gray-400 ml-1">{{ contact.email_confidence }}</span>
+        </div>{% endif %}
+        {% if contact.linkedin_url %}
+        <a href="{{ contact.linkedin_url }}" target="_blank" rel="noopener"
+           class="btn btn-ghost px-3 py-2 text-xs inline-block mt-1">Find the hiring manager on LinkedIn</a>
+        {% endif %}
+      </div>
+      {% else %}<p class="text-sm text-gray-500">No contact found for this company.</p>{% endif %}
+    </div>
+  </div>
+</div>
+{% endblock %}
