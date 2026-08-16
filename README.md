@@ -17,6 +17,11 @@ python run.py
 
 Opens <http://localhost:8000>. Click **Find jobs**, then **Download CSV**.
 
+If port 8000 is already taken, `run.py` sorts it out rather than crashing: if the
+holder is another JobApplier window it just opens that one, and if it's an
+unrelated program it moves to the next free port. Force a specific port with
+`python run.py --port 8123`.
+
 Command line equivalents:
 
 ```bash

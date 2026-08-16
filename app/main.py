@@ -6,7 +6,7 @@ import json
 import logging
 from pathlib import Path
 
-from fastapi import BackgroundTasks, FastAPI, Form, Request
+from fastapi import FastAPI, Form, Request
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
 from fastapi.templating import Jinja2Templates
@@ -133,10 +133,18 @@ async def _do_run(with_enrich: bool) -> None:
 
 
 @app.post("/run")
-async def trigger_run(background: BackgroundTasks, enrich: str = Form("1")):
+async def trigger_run(enrich: str = Form("1")):
     if STATE["running"]:
         return JSONResponse({"ok": False, "message": "already running"}, 409)
-    background.add_task(asyncio.create_task, _do_run(enrich == "1"))
+
+    # Flip the flag here, not inside _do_run: the task starts on the next event
+    # loop tick, so a fast double-click would otherwise launch two runs.
+    STATE.update(running=True, message="Starting...")
+
+    # Scheduled on the loop rather than handed to BackgroundTasks, so the run
+    # is independent of this request's lifecycle and the response returns
+    # immediately for the UI to poll. Keep a reference so it isn't GC'd.
+    STATE["task"] = asyncio.create_task(_do_run(enrich == "1"))
     return JSONResponse({"ok": True})
 
 
